@@ -1,0 +1,33 @@
+# AGENTS.md
+
+dsh Web 客户端插件：输入框回车行为开关（设置 → 通用 → 回车行为）。
+
+## Architecture
+
+- 双半插件：`lib/index.js`（host 半，注册 `ui-enter-newline` 设置命名空间 schema）+ `lib/client.js`（浏览器半，设置行 + document 捕获阶段回车拦截器）。
+- 手写 bundle，无构建步骤：`lib/client.js` 必须是纯 JS（无 JSX/TS），用 `React.createElement`；通过 `window.__ModuleLoader__.load({ id, factory(require) })` 注册，`require` 只能解析 seed（react 等）和 boot 图内的 `@deepseek-ai/dsh-client-*` 包。
+- 源码真身在本仓库；`install.sh` 把 `package.json + lib/` 复制部署到 `$DSH_HOME/profiles/node_modules/<包名>/`。挂载行在 `~/.dsh/profiles/web/cordis.patch.yml`。
+
+## Conventions
+
+- 改动流程：编辑 → `./install.sh` → 刷新页面（浏览器半生效）；host 半改动需重启 dsh web。
+- 提交身份用命令级 env 覆盖（`GIT_AUTHOR_NAME=Wuxie233` 等），不要写持久 git config。
+- 面向用户的说明写在 `README.md`；本文件只沉淀跨会话的运维知识。
+
+## Gotchas & Decisions
+
+- **不要用符号链接部署**：Node ESM 解析 symlink 时取真实路径，然后从仓库真实位置向上找依赖（`@deepseek-ai/dsh-settings` 等），会 `ERR_MODULE_NOT_FOUND`。必须复制部署（已实测复现）。
+- **包名出现在三处**，改名必须一起改：`package.json` 的 `name`、`lib/client.js` 的 `__ModuleLoader__.load({ id })`、`cordis.patch.yml` 挂载行的 `name`。
+- **client 插件必须导出 `inject`**（本插件为 `['slots','locale','connection','remote','settingsScope']`），否则 runner 拒绝 `ctx.slots` 等服务访问（"service not declared by your plugin"）。
+- **新增 host 端设置命名空间必须注册 schema**，否则浏览器端 `settingsScope.bind` 读不到命名空间（describe 缺失 → 永远 unavailable，不持久化）。
+- 拦截器守卫（勿删）：IME 组合中（`isComposing || keyCode === 229`）不拦截；textarea 有 `aria-activedescendant`（斜杠菜单开着）时不拦截；Shift+回车发送通过"合成纯回车 keydown + 重入标志"实现，走产品自身提交路径。
+
+## Commands
+
+- `./install.sh` — 部署到运行时（幂等）
+- `node --check lib/client.js` — 语法检查（ESM 的 index.js 复制为 .mjs 再查）
+- 生效验证：host 半 `cd ~/.dsh/profiles/web && node -e "await import('@deepseek-ai/dsh-client-enter-newline')"`
+
+## Module Map
+
+单包单插件，无子模块。参见 `README.md` 的文件清单。
