@@ -20,7 +20,8 @@ dsh Web 客户端插件：输入框回车行为开关（设置 → 通用 → �
 - **包名出现在三处**，改名必须一起改：`package.json` 的 `name`、`lib/client.js` 的 `__ModuleLoader__.load({ id })`、`cordis.patch.yml` 挂载行的 `name`。
 - **client 插件必须导出 `inject`**（本插件为 `['slots','locale','connection','remote','settingsScope']`），否则 runner 拒绝 `ctx.slots` 等服务访问（"service not declared by your plugin"）。
 - **新增 host 端设置命名空间必须注册 schema**，否则浏览器端 `settingsScope.bind` 读不到命名空间（describe 缺失 → 永远 unavailable，不持久化）。
-- 拦截器守卫（勿删）：IME 组合中（`isComposing || keyCode === 229`）不拦截；textarea 有 `aria-activedescendant`（斜杠菜单开着）时不拦截；Shift+回车发送通过"合成纯回车 keydown + 重入标志"实现，走产品自身提交路径。
+- 拦截器守卫（勿删）：IME 组合中（`isComposing || keyCode === 229`）不拦截；输入面有 `aria-activedescendant`（斜杠菜单开着）时不拦截；Shift+回车发送通过"合成纯回车 keydown + 重入标志"实现，走产品自身提交路径。
+- 0.1.2-alpha.1 之后 composer 是 Lexical contenteditable（`[data-composer-input]`），不再是 textarea。拦截器必须认这个表面；换行用 `document.execCommand('insertLineBreak')`。旧 textarea 路径只作回退。
 
 ## Commands
 
