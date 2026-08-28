@@ -5,7 +5,7 @@ dsh Web 客户端插件：输入框回车行为开关（设置 → 通用 → �
 ## Architecture
 
 - 双半插件：`lib/index.js`（host 半，注册 `ui-enter-newline` 设置命名空间 schema）+ `lib/client.js`（浏览器半，设置行 + document 捕获阶段回车拦截器）。
-- 手写 bundle，无构建步骤：`lib/client.js` 必须是纯 JS（无 JSX/TS），用 `React.createElement`；通过 `window.__ModuleLoader__.load({ id, factory(require) })` 注册，`require` 只能解析 seed（react 等）和 boot 图内的 `@deepseek-ai/dsh-client-*` 包。
+- 手写 bundle，无构建步骤：`lib/client.js` 必须是纯 JS（无 JSX/TS），用 `React.createElement`；通过 `window.__ModuleLoader__.load({ id, factory(require) })` 注册。`require` 只能解析平台模块表：`react` / `react-dom` / `@deepseek-ai/cordis` / `dsh-client-store` / `dsh-client-ui-slots` / `dsh-client-ui-primitives`。`createSnapshotStore` 走 `@deepseek-ai/dsh-client-store`，不要再 require 已移除的 `@deepseek-ai/dsh-client-runtime/client`。
 - 源码真身在本仓库；`install.sh` 把 `package.json + lib/` 复制部署到 `$DSH_HOME/profiles/node_modules/<包名>/`。挂载行在 `~/.dsh/profiles/web/cordis.patch.yml`。
 
 ## Conventions
